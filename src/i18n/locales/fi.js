@@ -74,7 +74,6 @@ const fi = {
     coordinate_space: "Avaruus",
     coordinate_space_screen: "Näyttö",
     coordinate_space_diagram: "Kaavio",
-    table_width: "Taulun leveys",
     language: "Kieli",
     flush_storage: "Tyhjennä tallennustila",
     are_you_sure_flush_storage:
@@ -266,7 +265,7 @@ const fi = {
     versions: "Versiot",
     no_saved_versions: "Ei tallennettuja versioita",
     record_version: "Tallenna versio",
-    commited_at: "Tallennettu",
+    committed_at: "Tallennettu",
     read_only: "Vain luku",
     continue: "Jatka",
     restore_version: "Palauta versio",

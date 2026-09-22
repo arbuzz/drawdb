@@ -1,16 +1,22 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import { Cardinality, ObjectType, Tab } from "../../data/constants";
-import { calcPath } from "../../utils/calcPath";
+import { calcPath, calcCompositePath } from "../../utils/calcPath";
 import { useDiagram, useSettings, useLayout, useSelect } from "../../hooks";
 import { useTranslation } from "react-i18next";
 import { SideSheet } from "@douyinfe/semi-ui";
 import RelationshipInfo from "../EditorSidePanel/RelationshipsTab/RelationshipInfo";
+import {
+  getVisibleFieldIndex,
+  getVisibleFields,
+  getRelationshipFields,
+  getTableWidth,
+} from "../../utils/utils";
 
 const labelFontSize = 16;
 
 export default function Relationship({ data }) {
   const { settings } = useSettings();
-  const { tables } = useDiagram();
+  const { tables, relationships } = useDiagram();
   const { layout } = useLayout();
   const { selectedElement, setSelectedElement } = useSelect();
   const { t } = useTranslation();
@@ -22,22 +28,64 @@ export default function Relationship({ data }) {
     if (!startTable || !endTable || startTable.hidden || endTable.hidden)
       return null;
 
+    const startFields = getVisibleFields(startTable, relationships);
+    const endFields = getVisibleFields(endTable, relationships);
+
+    const pairs = getRelationshipFields(data);
+
     return {
-      startFieldIndex: startTable.fields.findIndex(
-        (f) => f.id === data.startFieldId,
+      startFieldIndex: getVisibleFieldIndex(
+        startTable,
+        data.startFieldId,
+        relationships,
       ),
-      endFieldIndex: endTable.fields.findIndex((f) => f.id === data.endFieldId),
+      endFieldIndex: getVisibleFieldIndex(
+        endTable,
+        data.endFieldId,
+        relationships,
+      ),
+      startFieldIndices: pairs.map((p) =>
+        getVisibleFieldIndex(startTable, p.startFieldId, relationships),
+      ),
+      endFieldIndices: pairs.map((p) =>
+        getVisibleFieldIndex(endTable, p.endFieldId, relationships),
+      ),
       startTable: {
         x: startTable.x,
         y: startTable.y,
+        width: getTableWidth(startTable),
         comment: startTable.comment,
+        fields: startFields,
       },
-      endTable: { x: endTable.x, y: endTable.y, comment: endTable.comment },
+      endTable: {
+        x: endTable.x,
+        y: endTable.y,
+        width: getTableWidth(endTable),
+        comment: endTable.comment,
+        fields: endFields,
+      },
     };
-  }, [tables, data]);
+  }, [tables, relationships, data]);
+
+  const isComposite = (pathValues?.startFieldIndices?.length ?? 0) > 1;
+
+  const composite = useMemo(() => {
+    if (!pathValues || !isComposite) return null;
+    return calcCompositePath(
+      {
+        startTable: pathValues.startTable,
+        endTable: pathValues.endTable,
+        startFieldIndices: pathValues.startFieldIndices,
+        endFieldIndices: pathValues.endFieldIndices,
+      },
+      1,
+      settings.showComments,
+    );
+  }, [pathValues, isComposite, settings.showComments]);
 
   const pathRef = useRef();
   const labelRef = useRef();
+  const [hovered, setHovered] = useState(false);
 
   let cardinalityStart = "1";
   let cardinalityEnd = "1";
@@ -75,7 +123,14 @@ export default function Relationship({ data }) {
 
   const cardinalityOffset = 28;
 
-  if (pathRef.current) {
+  if (composite) {
+    labelX = composite.labelPoint.x - (labelWidth ?? 0) / 2;
+    labelY = composite.labelPoint.y + (labelHeight ?? 0) / 2;
+    cardinalityStartX = composite.startCardinality.x;
+    cardinalityStartY = composite.startCardinality.y;
+    cardinalityEndX = composite.endCardinality.x;
+    cardinalityEndY = composite.endCardinality.y;
+  } else if (pathRef.current) {
     const pathLength = pathRef.current.getTotalLength();
 
     const labelPoint = pathRef.current.getPointAtLength(pathLength / 2);
@@ -119,10 +174,19 @@ export default function Relationship({ data }) {
 
   return (
     <>
-      <g className="select-none group" onDoubleClick={edit}>
+      <g
+        className="select-none group"
+        onDoubleClick={edit}
+        onPointerEnter={() => setHovered(true)}
+        onPointerLeave={() => setHovered(false)}
+      >
         {/* invisible wider path for better hover ux */}
         <path
-          d={calcPath(pathValues, settings.tableWidth, 1, settings.showComments)}
+          d={
+            composite
+              ? composite.path
+              : calcPath(pathValues, 1, settings.showComments)
+          }
           fill="none"
           stroke="transparent"
           strokeWidth={12}
@@ -130,8 +194,13 @@ export default function Relationship({ data }) {
         />
         <path
           ref={pathRef}
-          d={calcPath(pathValues, settings.tableWidth, 1, settings.showComments)}
+          d={
+            composite
+              ? composite.path
+              : calcPath(pathValues, 1, settings.showComments)
+          }
           className="relationship-path"
+          style={{ stroke: hovered ? undefined : data.color }}
           fill="none"
           cursor="pointer"
         />
@@ -139,7 +208,7 @@ export default function Relationship({ data }) {
           <text
             x={labelX}
             y={labelY}
-            fill={settings.mode === "dark" ? "lightgrey" : "#333"}
+            fill={data.color ?? (settings.mode === "dark" ? "lightgrey" : "#333")}
             fontSize={labelFontSize}
             fontWeight={500}
             ref={labelRef}
@@ -148,17 +217,19 @@ export default function Relationship({ data }) {
             {data.name}
           </text>
         )}
-        {pathRef.current && settings.showCardinality && (
+        {(composite || pathRef.current) && settings.showCardinality && (
           <>
             <CardinalityLabel
               x={cardinalityStartX}
               y={cardinalityStartY}
               text={cardinalityStart}
+              color={data.color}
             />
             <CardinalityLabel
               x={cardinalityEndX}
               y={cardinalityEndY}
               text={cardinalityEnd}
+              color={data.color}
             />
           </>
         )}
@@ -188,7 +259,7 @@ export default function Relationship({ data }) {
   );
 }
 
-function CardinalityLabel({ x, y, text, r = 12, padding = 14 }) {
+function CardinalityLabel({ x, y, text, color, r = 12, padding = 14 }) {
   const [textWidth, setTextWidth] = useState(0);
   const textRef = useRef(null);
 
@@ -208,7 +279,7 @@ function CardinalityLabel({ x, y, text, r = 12, padding = 14 }) {
         ry={r}
         width={textWidth + padding}
         height={r * 2}
-        fill="grey"
+        fill={color ?? "grey"}
         className="group-hover:fill-sky-600"
       />
       <text

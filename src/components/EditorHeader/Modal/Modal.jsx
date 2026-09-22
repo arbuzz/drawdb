@@ -1,4 +1,5 @@
 import {
+  Button,
   Image,
   Input,
   Modal as SemiUIModal,
@@ -8,23 +9,28 @@ import {
 import { saveAs } from "file-saver";
 import { Parser } from "node-sql-parser";
 import { Parser as OracleParser } from "oracle-sql-parser";
-import { useContext, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { DB, MODAL, STATUS, State } from "../../../data/constants";
+import { DB, MODAL, STATUS } from "../../../data/constants";
 import { databases } from "../../../data/databases";
-import { db } from "../../../data/db";
 import {
   useAreas,
   useDiagram,
   useEnums,
+  useNavigateWithParams,
   useNotes,
-  useSaveState,
   useTransform,
   useTypes,
   useUndoRedo,
+  useViews,
 } from "../../../hooks";
 import { isRtl } from "../../../i18n/utils/rtl";
+import { useExtensions } from "../../../context/ExtensionsContext";
 import { importSQL } from "../../../utils/importSQL";
+import {
+  allowedTypesFor,
+  normalizeAiDiagram,
+} from "../../../utils/importAiDiagram";
 import {
   getModalTitle,
   getModalWidth,
@@ -33,14 +39,13 @@ import {
 import CodeEditor from "../../CodeEditor";
 import ImportDiagram from "./ImportDiagram";
 import ImportSource from "./ImportSource";
+import ImportWithAiButton from "./ImportWithAiButton";
 import Language from "./Language";
 import New from "./New";
 import Open from "./Open";
 import Rename from "./Rename";
-import SetTableWidth from "./SetTableWidth";
 import Share from "./Share";
-import { IdContext } from "../../Workspace";
-import { nanoid } from "nanoid";
+import { mergeCustomTypes } from "../../../utils/customTypes";
 
 const extensionToLanguage = {
   md: "markdown",
@@ -54,22 +59,21 @@ export default function Modal({
   setModal,
   title,
   setTitle,
-  setDiagramId,
   exportData,
   setExportData,
   importDb,
   importFrom,
+  saveAsCopy,
 }) {
   const { t, i18n } = useTranslation();
-  const { setGistId } = useContext(IdContext);
-  const { setTables, setRelationships, database, setDatabase } = useDiagram();
+  const { setTables, setRelationships, database } = useDiagram();
   const { setNotes } = useNotes();
   const { setAreas } = useAreas();
   const { setTypes } = useTypes();
   const { setEnums } = useEnums();
+  const { setViews } = useViews();
   const { setTransform } = useTransform();
   const { setUndoStack, setRedoStack } = useUndoRedo();
-  const { setSaveState } = useSaveState();
   const [uncontrolledTitle, setUncontrolledTitle] = useState(title);
   const [uncontrolledLanguage, setUncontrolledLanguage] = useState(
     i18n.language,
@@ -86,12 +90,20 @@ export default function Modal({
   const [selectedTemplateId, setSelectedTemplateId] = useState(-1);
   const [selectedDiagramId, setSelectedDiagramId] = useState(0);
   const [saveAsTitle, setSaveAsTitle] = useState(title);
+  const [aiImporting, setAiImporting] = useState(false);
+  const navigate = useNavigateWithParams();
+  const { importSqlWithAi } = useExtensions();
+
+  useEffect(() => {
+    if (modal === MODAL.SAVEAS) setSaveAsTitle(title);
+  }, [modal, title]);
 
   const overwriteDiagram = () => {
     setTables(importData.tables);
     setRelationships(importData.relationships);
     setAreas(importData.subjectAreas ?? []);
     setNotes(importData.notes ?? []);
+    setViews(importData.views ?? []);
     if (importData.title) {
       setTitle(importData.title);
     }
@@ -101,63 +113,9 @@ export default function Modal({
     if (databases[database].hasTypes && importData.types) {
       setTypes(importData.types);
     }
-  };
-
-  const loadDiagram = async (id) => {
-    await db.diagrams
-      .get(id)
-      .then((diagram) => {
-        if (diagram) {
-          if (diagram.database) {
-            setDatabase(diagram.database);
-          } else {
-            setDatabase(DB.GENERIC);
-          }
-          setDiagramId(diagram.id);
-          setTitle(diagram.name);
-          setTables(diagram.tables);
-          setRelationships(diagram.references);
-          setAreas(diagram.areas);
-          setNotes(diagram.notes);
-          setGistId(diagram.gistId ?? "");
-          setTransform({
-            pan: diagram.pan,
-            zoom: diagram.zoom,
-          });
-          setUndoStack([]);
-          setRedoStack([]);
-          if (databases[diagram.database].hasTypes) {
-            setTypes(
-              diagram.types.map((t) =>
-                t.id
-                  ? t
-                  : {
-                      ...t,
-                      id: nanoid(),
-                      fields: t.fields.map((f) =>
-                        f.id ? f : { ...f, id: nanoid() },
-                      ),
-                    },
-              ),
-            );
-          }
-          if (databases[diagram.database].hasEnums) {
-            setEnums(
-              diagram.enums.map((e) => (!e.id ? { ...e, id: nanoid() } : e)) ??
-                [],
-            );
-          }
-          window.name = `d ${diagram.id}`;
-          setSaveState(State.SAVING);
-        } else {
-          window.name = "";
-          Toast.error(t("didnt_find_diagram"));
-        }
-      })
-      .catch((error) => {
-        console.log(error);
-        Toast.error(t("didnt_find_diagram"));
-      });
+    if (importData.customTypes) {
+      mergeCustomTypes(importData.customTypes);
+    }
   };
 
   const parseSQLAndLoadDiagram = () => {
@@ -192,32 +150,7 @@ export default function Modal({
         database,
       );
 
-      if (importSource.overwrite) {
-        setTables(diagramData.tables);
-        setRelationships(diagramData.relationships);
-        if (databases[database].hasTypes) setTypes(diagramData.types ?? []);
-        if (databases[database].hasEnums) setEnums(diagramData.enums ?? []);
-        setTransform((prev) => ({ ...prev, pan: { x: 0, y: 0 } }));
-        setNotes([]);
-        setAreas([]);
-      } else {
-        setTables((prev) => [...prev, ...diagramData.tables]);
-        setRelationships((prev) =>
-          [...prev, ...diagramData.relationships].map((r, i) => ({
-            ...r,
-            id: i,
-          })),
-        );
-        if (databases[database].hasTypes && diagramData.types.length)
-          setTypes((prev) => [...prev, ...diagramData.types]);
-        if (databases[database].hasEnums && diagramData.enums.length)
-          setEnums((prev) => [...prev, ...diagramData.enums]);
-      }
-
-      setUndoStack([]);
-      setRedoStack([]);
-
-      setModal(MODAL.NONE);
+      applyImportedDiagram(diagramData);
     } catch (e) {
       setError({
         type: STATUS.ERROR,
@@ -226,9 +159,69 @@ export default function Modal({
     }
   };
 
-  const createNewDiagram = (id) => {
-    const newWindow = window.open("/editor");
-    newWindow.name = "lt " + id;
+  const applyImportedDiagram = (diagramData) => {
+    if (importSource.overwrite) {
+      setTables(diagramData.tables);
+      setRelationships(diagramData.relationships);
+      if (databases[database].hasTypes) setTypes(diagramData.types ?? []);
+      if (databases[database].hasEnums) setEnums(diagramData.enums ?? []);
+      setTransform((prev) => ({ ...prev, pan: { x: 0, y: 0 } }));
+      setNotes([]);
+      setAreas([]);
+      setViews([]);
+    } else {
+      setTables((prev) => [...prev, ...diagramData.tables]);
+      setRelationships((prev) =>
+        [...prev, ...diagramData.relationships].map((r, i) => ({
+          ...r,
+          id: i,
+        })),
+      );
+      if (databases[database].hasTypes && diagramData.types.length)
+        setTypes((prev) => [...prev, ...diagramData.types]);
+      if (databases[database].hasEnums && diagramData.enums.length)
+        setEnums((prev) => [...prev, ...diagramData.enums]);
+    }
+
+    setUndoStack([]);
+    setRedoStack([]);
+
+    setModal(MODAL.NONE);
+  };
+
+  const importSourceWithAi = async () => {
+    setAiImporting(true);
+    try {
+      const result = await importSqlWithAi({
+        sql: importSource.src,
+        database: database === DB.GENERIC ? importDb : database,
+        allowedTypes: allowedTypesFor(database),
+      });
+
+      if (!result) return;
+
+      const { diagram, warnings } = normalizeAiDiagram(
+        result.diagram,
+        database,
+      );
+      const allWarnings = [...(result.warnings ?? []), ...warnings];
+
+      applyImportedDiagram(diagram);
+
+      if (allWarnings.length) {
+        Toast.warning({
+          content: allWarnings.slice(0, 3).join(" "),
+          duration: 8,
+        });
+      }
+    } catch (e) {
+      setError({
+        type: STATUS.ERROR,
+        message: e?.message || t("ai_import_failed"),
+      });
+    } finally {
+      setAiImporting(false);
+    }
   };
 
   const getModalOnOk = async () => {
@@ -260,8 +253,8 @@ export default function Modal({
         parseSQLAndLoadDiagram();
         return;
       case MODAL.OPEN:
-        if (selectedDiagramId === 0) return;
-        loadDiagram(selectedDiagramId);
+        if (!selectedDiagramId) return;
+        navigate(`/editor/diagrams/${selectedDiagramId}`, "_blank");
         setModal(MODAL.NONE);
         return;
       case MODAL.RENAME:
@@ -269,11 +262,11 @@ export default function Modal({
         setModal(MODAL.NONE);
         return;
       case MODAL.SAVEAS:
-        setTitle(saveAsTitle);
+        await saveAsCopy(saveAsTitle);
         setModal(MODAL.NONE);
         return;
       case MODAL.NEW:
-        createNewDiagram(selectedTemplateId);
+        window.open("/editor/templates/" + selectedTemplateId, "_blank");
         setModal(MODAL.NONE);
         return;
       case MODAL.LANGUAGE:
@@ -367,8 +360,6 @@ export default function Modal({
             </div>
           );
         }
-      case MODAL.TABLE_WIDTH:
-        return <SetTableWidth />;
       case MODAL.LANGUAGE:
         return (
           <Language
@@ -383,12 +374,52 @@ export default function Modal({
     }
   };
 
+  const handleCancel = () => {
+    if (modal === MODAL.RENAME) setUncontrolledTitle(title);
+    if (modal === MODAL.LANGUAGE) setUncontrolledLanguage(i18n.language);
+    setModal(MODAL.NONE);
+  };
+
+  const okDisabled =
+    (error && error?.type === STATUS.ERROR) ||
+    (modal === MODAL.IMPORT && (error.type === STATUS.ERROR || !importData)) ||
+    (modal === MODAL.RENAME && title === "") ||
+    ((modal === MODAL.IMG || modal === MODAL.CODE) && !exportData.data) ||
+    (modal === MODAL.SAVEAS && saveAsTitle === "") ||
+    (modal === MODAL.IMPORT_SRC && importSource.src === "");
+
+  const showAiFooter =
+    modal === MODAL.IMPORT_SRC && typeof importSqlWithAi === "function";
+
+  const aiFooter = (
+    <div className="flex items-center justify-between">
+      <div>
+        {error.type === STATUS.ERROR && (
+          <ImportWithAiButton
+            loading={aiImporting}
+            disabled={!importSource.src}
+            onClick={importSourceWithAi}
+          />
+        )}
+      </div>
+      <div>
+        <Button type="tertiary" autoFocus onClick={handleCancel}>
+          {t("cancel")}
+        </Button>
+        <Button theme="solid" disabled={okDisabled} onClick={getModalOnOk}>
+          {getOkText(modal)}
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <SemiUIModal
       style={isRtl(i18n.language) ? { direction: "rtl" } : {}}
       title={getModalTitle(modal)}
-      visible={modal !== MODAL.NONE}
+      visible={modal !== MODAL.NONE && modal !== MODAL.CONFIG_CUSTOM_TYPES}
       onOk={getModalOnOk}
+      {...(showAiFooter ? { footer: aiFooter } : {})}
       afterClose={() => {
         setExportData(() => ({
           data: "",
@@ -405,23 +436,12 @@ export default function Modal({
           overwrite: false,
         });
       }}
-      onCancel={() => {
-        if (modal === MODAL.RENAME) setUncontrolledTitle(title);
-        if (modal === MODAL.LANGUAGE) setUncontrolledLanguage(i18n.language);
-        setModal(MODAL.NONE);
-      }}
+      onCancel={handleCancel}
       centered
       closeOnEsc={true}
       okText={getOkText(modal)}
       okButtonProps={{
-        disabled:
-          (error && error?.type === STATUS.ERROR) ||
-          (modal === MODAL.IMPORT &&
-            (error.type === STATUS.ERROR || !importData)) ||
-          (modal === MODAL.RENAME && title === "") ||
-          ((modal === MODAL.IMG || modal === MODAL.CODE) && !exportData.data) ||
-          (modal === MODAL.SAVEAS && saveAsTitle === "") ||
-          (modal === MODAL.IMPORT_SRC && importSource.src === ""),
+        disabled: okDisabled,
         hidden: modal === MODAL.SHARE,
       }}
       hasCancel={modal !== MODAL.SHARE}

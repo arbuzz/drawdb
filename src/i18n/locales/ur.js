@@ -74,7 +74,6 @@ const ur = {
     coordinate_space: "اسپیس",
     coordinate_space_screen: "سکرین",
     coordinate_space_diagram: "ڈایاگرام",
-    table_width: "ٹیبل کی چوڑائی",
     language: "زبان",
     flush_storage: "اسٹوریج صاف کریں",
     are_you_sure_flush_storage:
@@ -266,7 +265,7 @@ const ur = {
     versions: "ورژنز",
     no_saved_versions: "کوئی محفوظ شدہ ورژن نہیں",
     record_version: "ورژن ریکارڈ کریں",
-    commited_at: "پر کمٹ کیا گیا",
+    committed_at: "پر کمٹ کیا گیا",
     read_only: "صرف پڑھنے کے لیے",
     continue: "جاری رکھیں",
     restore_version: "ورژن بحال کریں",

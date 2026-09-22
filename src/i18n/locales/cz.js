@@ -68,7 +68,6 @@ const cz = {
     coordinate_space: "Prostor",
     coordinate_space_screen: "Obrazovka",
     coordinate_space_diagram: "Diagram",
-    table_width: "Šířka stolu",
     language: "Jazyk",
     flush_storage: "Splachovací úložiště",
     are_you_sure_flush_storage:
@@ -259,7 +258,7 @@ const cz = {
     versions: "Verze",
     no_saved_versions: "Žádné uložené verze",
     record_version: "Zaznamenat verzi",
-    commited_at: "Potvrzeno v",
+    committed_at: "Potvrzeno v",
     read_only: "Pouze pro čtení",
     continue: "Pokračovat",
     restore_version: "Obnovit verzi",

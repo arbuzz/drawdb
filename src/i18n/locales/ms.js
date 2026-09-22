@@ -71,7 +71,6 @@ const ms = {
     coordinate_space: "Ruang koordinat",
     coordinate_space_screen: "Skrin",
     coordinate_space_diagram: "Rajah",
-    table_width: "Lebar jadual",
     language: "Bahasa",
     flush_storage: "Kosongkan storan",
     are_you_sure_flush_storage:
@@ -265,7 +264,7 @@ const ms = {
     versions: "Versi",
     no_saved_versions: "Tiada versi disimpan",
     record_version: "Rekod versi",
-    commited_at: "Dikomit pada",
+    committed_at: "Dikomit pada",
     read_only: "Baca sahaja",
     continue: "Teruskan",
     restore_version: "Pulihkan versi",

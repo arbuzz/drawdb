@@ -74,7 +74,6 @@ const bg = {
         coordinate_space: "Пространство",
         coordinate_space_screen: "Екран",
         coordinate_space_diagram: "Диаграма",
-        table_width: "Ширина на таблицата",
         language: "Език",
         flush_storage: "Изчисти хранилището",
         are_you_sure_flush_storage:
@@ -266,7 +265,7 @@ const bg = {
         versions: "Версии",
         no_saved_versions: "Няма запазени версии",
         record_version: "Запиши версия",
-        commited_at: "Комитнато на",
+        committed_at: "Комитнато на",
         read_only: "Само за четене",
         continue: "Продължи",
         restore_version: "Възстанови версия",

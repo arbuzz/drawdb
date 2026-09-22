@@ -74,7 +74,6 @@ const pa = {
     coordinate_space: "ਸਪੇਸ",
     coordinate_space_screen: "ਸਕ੍ਰੀਨ",
     coordinate_space_diagram: "ਡਾਯਾਗ੍ਰਾਮ",
-    table_width: "ਟੇਬਲ ਦੀ ਚੌੜਾਈ",
     language: "ਭਾਸ਼ਾ",
     flush_storage: "ਸਟੋਰੇਜ ਸਾਫ਼ ਕਰੋ",
     are_you_sure_flush_storage:
@@ -270,7 +269,7 @@ const pa = {
     versions: "ਵਰਜਨ",
     no_saved_versions: "ਕੋਈ ਸੇਵ ਕੀਤੇ ਵਰਜਨ ਨਹੀਂ",
     record_version: "ਵਰਜਨ ਰਿਕਾਰਡ ਕਰੋ",
-    commited_at: "ਕਮਿਟ ਕੀਤਾ",
+    committed_at: "ਕਮਿਟ ਕੀਤਾ",
     read_only: "ਸਿਰਫ ਪੜ੍ਹਨ ਲਈ",
     continue: "ਜਾਰੀ ਰੱਖੋ",
     restore_version: "ਵਰਜਨ ਰੀਸਟੋਰ ਕਰੋ",

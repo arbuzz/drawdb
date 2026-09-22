@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Slot } from "../../context/ExtensionsContext";
 import {
   Action,
   Cardinality,
@@ -8,9 +9,11 @@ import {
   gridSize,
   gridCircleRadius,
   minAreaSize,
+  defaultRelationshipColor,
 } from "../../data/constants";
 import { Toast } from "@douyinfe/semi-ui";
 import Table from "./Table";
+import View from "./View";
 import Area from "./Area";
 import Relationship from "./Relationship";
 import Note from "./Note";
@@ -25,10 +28,21 @@ import {
   useNotes,
   useLayout,
   useSaveState,
+  useCollab,
+  useViews,
 } from "../../hooks";
 import { useTranslation } from "react-i18next";
 import { useEventListener } from "usehooks-ts";
-import { areFieldsCompatible, getTableHeight } from "../../utils/utils";
+import {
+  areFieldsCompatible,
+  getTableHeight,
+  getTableWidth,
+} from "../../utils/utils";
+import {
+  getViewHeight,
+  getViewWidth,
+  resolveViewColumns,
+} from "../../utils/views";
 import { getRectFromEndpoints, isInsideRect } from "../../utils/rect";
 import { State, noteWidth } from "../../data/constants";
 import { nanoid } from "nanoid";
@@ -47,6 +61,7 @@ export default function Canvas() {
     useDiagram();
   const { setSaveState } = useSaveState();
   const { areas, updateArea } = useAreas();
+  const { views, updateView } = useViews();
   const { notes, updateNote } = useNotes();
   const { layout } = useLayout();
   const { settings } = useSettings();
@@ -75,6 +90,33 @@ export default function Canvas() {
     endX: 0,
     endY: 0,
   });
+  const { emitAwareness } = useCollab();
+  const lastLinkingRef = useRef(false);
+  const rightClickPanned = useRef(false);
+
+  useEffect(() => {
+    if (linking) {
+      emitAwareness({
+        linking: {
+          startX: linkingLine.startX,
+          startY: linkingLine.startY,
+          endX: linkingLine.endX,
+          endY: linkingLine.endY,
+        },
+      });
+      lastLinkingRef.current = true;
+    } else if (lastLinkingRef.current) {
+      emitAwareness({ linking: null });
+      lastLinkingRef.current = false;
+    }
+  }, [
+    linking,
+    linkingLine.startX,
+    linkingLine.startY,
+    linkingLine.endX,
+    linkingLine.endY,
+    emitAwareness,
+  ]);
   const [hoveredTable, setHoveredTable] = useState({
     tableId: null,
     fieldId: null,
@@ -134,14 +176,34 @@ export default function Canvas() {
       const tableRect = {
         x: table.x,
         y: table.y,
-        width: settings.tableWidth,
-        height: getTableHeight(
-          table,
-          settings.tableWidth,
+        width: getTableWidth(table),
+        height: getTableHeight(table, settings.showComments, relationships),
+      };
+      if (shouldAddElement(tableRect, element)) {
+        elements.push(element);
+      }
+    });
+
+    views.forEach((view) => {
+      if (view.locked) return;
+
+      const element = {
+        id: view.id,
+        type: ObjectType.VIEW,
+        currentCoords: { x: view.x, y: view.y },
+        initialCoords: { x: view.x, y: view.y },
+      };
+      const viewRect = {
+        x: view.x,
+        y: view.y,
+        width: getViewWidth(view),
+        height: getViewHeight(
+          view,
+          resolveViewColumns(view, tables),
           settings.showComments,
         ),
       };
-      if (shouldAddElement(tableRect, element)) {
+      if (shouldAddElement(viewRect, element)) {
         elements.push(element);
       }
     });
@@ -340,6 +402,9 @@ export default function Canvas() {
         if (el.type === ObjectType.NOTE) {
           updateNote(el.id, { ...elementFinalCoords });
         }
+        if (el.type === ObjectType.VIEW) {
+          updateView(el.id, { ...elementFinalCoords });
+        }
         newBulkSelectedElements.push({
           ...el,
           currentCoords: elementFinalCoords,
@@ -418,7 +483,8 @@ export default function Canvas() {
 
     // don't pan if the sidesheet for editing a table is open
     if (
-      selectedElement.element === ObjectType.TABLE &&
+      (selectedElement.element === ObjectType.TABLE ||
+        selectedElement.element === ObjectType.VIEW) &&
       selectedElement.open &&
       !layout.sidebar
     )
@@ -426,6 +492,7 @@ export default function Canvas() {
 
     const isMouseLeftButton = e.button === 0;
     const isMouseMiddleButton = e.button === 1;
+    const isMouseRightButton = e.button === 2;
 
     if (isMouseLeftButton) {
       setBulkSelectRect({
@@ -441,7 +508,8 @@ export default function Canvas() {
         handlePointerDownOnElement(e, elementPointerDown);
       }
       pointer.setStyle("crosshair");
-    } else if (isMouseMiddleButton) {
+    } else if (isMouseMiddleButton || isMouseRightButton) {
+      if (isMouseRightButton) rightClickPanned.current = false;
       setPanning({
         isPanning: true,
         panStart: transform.pan,
@@ -528,6 +596,7 @@ export default function Canvas() {
 
     if (panning.isPanning && didPan()) {
       setSaveState(State.SAVING);
+      if (e.button === 2) rightClickPanned.current = true;
     }
     setPanning((old) => ({ ...old, isPanning: false }));
     pointer.setStyle("default");
@@ -624,9 +693,16 @@ export default function Canvas() {
       cardinality,
       endTableId: hoveredTable.tableId,
       endFieldId: hoveredTable.fieldId,
+      fields: [
+        {
+          startFieldId: linkingLine.startFieldId,
+          endFieldId: hoveredTable.fieldId,
+        },
+      ],
       updateConstraint: Constraint.NONE,
       deleteConstraint: Constraint.NONE,
       name: `fk_${startTableName}_${startField.name}_${endTableName}`,
+      color: defaultRelationshipColor,
       id: nanoid(),
     };
     delete newRelationship.startX;
@@ -642,8 +718,6 @@ export default function Canvas() {
       e.preventDefault();
 
       if (e.ctrlKey || e.metaKey) {
-        // How "eager" the viewport is to
-        // center the cursor's coordinates
         const eagernessFactor = 0.05;
         setTransform((prev) => ({
           pan: {
@@ -672,7 +746,7 @@ export default function Canvas() {
         setTransform((prev) => ({
           ...prev,
           pan: {
-            x: prev.pan.x + e.deltaX / prev.zoom,
+            ...prev.pan,
             y: prev.pan.y + e.deltaY / prev.zoom,
           },
         }));
@@ -697,6 +771,12 @@ export default function Canvas() {
           onPointerMove={handlePointerMove}
           onPointerDown={handlePointerDown}
           onPointerUp={handlePointerUp}
+          onContextMenu={(e) => {
+            if (rightClickPanned.current) {
+              e.preventDefault();
+              rightClickPanned.current = false;
+            }
+          }}
           className="absolute w-full h-full touch-none"
           viewBox={`${viewBox.left} ${viewBox.top} ${viewBox.width} ${viewBox.height}`}
         >
@@ -762,6 +842,18 @@ export default function Canvas() {
               }}
             />
           ))}
+          {views.map((view) => (
+            <View
+              key={view.id}
+              viewData={view}
+              onPointerDown={() => {
+                elementPointerDown = {
+                  element: view,
+                  type: ObjectType.VIEW,
+                };
+              }}
+            />
+          ))}
           {linking && (
             <path
               d={`M ${linkingLine.startX} ${linkingLine.startY} L ${linkingLine.endX} ${linkingLine.endY}`}
@@ -770,6 +862,7 @@ export default function Canvas() {
               className="pointer-events-none touch-none"
             />
           )}
+          <Slot name="svg-overlay" />
           {notes.map((n) => (
             <Note
               key={n.id}

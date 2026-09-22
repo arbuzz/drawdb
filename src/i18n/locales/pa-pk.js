@@ -74,7 +74,6 @@ const pa_pk = {
     coordinate_space: "جگہ",
     coordinate_space_screen: "سکرین",
     coordinate_space_diagram: "ڈایاگرام",
-    table_width: "ٹیبل دی چوڑائی",
     language: "زبان",
     flush_storage: "سٹوریج صاف کرو",
     are_you_sure_flush_storage:
@@ -266,7 +265,7 @@ const pa_pk = {
     versions: "ورژنز",
     no_saved_versions: "کوئی محفوظ ورژن نہیں",
     record_version: "ورژن ریکارڈ کرو",
-    commited_at: "تے کمٹ کیتا گیا",
+    committed_at: "تے کمٹ کیتا گیا",
     read_only: "صرف پڑھن لئی",
     continue: "جاری رکھو",
     restore_version: "ورژن بحال کرو",

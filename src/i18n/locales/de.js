@@ -67,7 +67,6 @@ const de = {
     coordinate_space: "Achse",
     coordinate_space_screen: "Bildschirm",
     coordinate_space_diagram: "Diagramm",
-    table_width: "Tabellenbreite",
     language: "Sprache",
     flush_storage: "Speicher leeren",
     are_you_sure_flush_storage:
@@ -269,7 +268,7 @@ const de = {
     versions: "Versionen",
     no_saved_versions: "Keine gespeicherten Versionen",
     record_version: "Version aufzeichnen",
-    commited_at: "Übertragen am",
+    committed_at: "Übertragen am",
     read_only: "Nur lesen",
     continue: "Fortfahren",
     restore_version: "Version wiederherstellen",

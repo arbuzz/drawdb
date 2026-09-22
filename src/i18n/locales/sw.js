@@ -74,7 +74,6 @@ const sw = {
     coordinate_space: "Nafasi ya kuratibu",
     coordinate_space_screen: "Skrini",
     coordinate_space_diagram: "Mchoro",
-    table_width: "Upana wa jedwali",
     language: "Lugha",
     flush_storage: "Safisha hifadhi",
     are_you_sure_flush_storage:
@@ -270,7 +269,7 @@ const sw = {
     versions: "Matoleo",
     no_saved_versions: "Hakuna matoleo yaliyohifadhiwa",
     record_version: "Rekodi toleo",
-    commited_at: "Ilihifadhiwa tarehe",
+    committed_at: "Ilihifadhiwa tarehe",
     read_only: "Soma tu",
     continue: "Endelea",
     restore_version: "Rejesha toleo",

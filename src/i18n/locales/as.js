@@ -76,7 +76,6 @@ const as = {
       coordinate_space: "স্থান",
       coordinate_space_screen: "স্ক্ৰীণ",
       coordinate_space_diagram: "ডায়াগ্ৰাম",
-      table_width: "টেবুলৰ প্ৰস্থ",
       language: "ভাষা",
       flush_storage: "সংগ্ৰহস্থল খালি কৰক",
       are_you_sure_flush_storage:
@@ -268,7 +267,7 @@ const as = {
       versions: "সংস্কৰণবোৰ",
       no_saved_versions: "কোনো সংৰক্ষিত সংস্কৰণ নাই",
       record_version: "সংস্কৰণ ৰেকৰ্ড কৰক",
-      commited_at: "কমিট কৰা হৈছিল",
+      committed_at: "কমিট কৰা হৈছিল",
       read_only: "পড়িবলৈহে",
       continue: "জাৰি ৰাখক",
       restore_version: "সংস্কৰণ পুনৰুদ্ধাৰ কৰক",

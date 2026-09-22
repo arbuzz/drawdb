@@ -74,7 +74,6 @@ const tm = {
     coordinate_space: "இடம்",
     coordinate_space_screen: "திரை",
     coordinate_space_diagram: "வரைபடம்",
-    table_width: "அட்டவணை அகலம்",
     language: "மொழி",
     flush_storage: "சேமிப்பகத்தை காலி செய்",
     are_you_sure_flush_storage:
@@ -284,7 +283,7 @@ const tm = {
     versions: "பதிப்புகள்",
     no_saved_versions: "பதிப்புகள் இல்லை",
     record_version: "பதிப்பை பதிவு செய்",
-    commited_at: "செயல்படுத்திய நேரம்",
+    committed_at: "செயல்படுத்திய நேரம்",
     read_only: "வாசிக்க மட்டும்",
     continue: "தொடரு",
     restore_version: "பதிப்பை மீட்டெடு",

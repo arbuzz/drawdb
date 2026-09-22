@@ -72,7 +72,6 @@ const vi = {
     coordinate_space: "Không gian",
     coordinate_space_screen: "Màn hình",
     coordinate_space_diagram: "Sơ đồ",
-    table_width: "Chiều rộng của bảng",
     language: "Ngôn ngữ",
     flush_storage: "Xóa bộ nhớ",
     are_you_sure_flush_storage:
@@ -262,7 +261,7 @@ const vi = {
     versions: "Các phiên bản",
     no_saved_versions: "Không có phiên bản đã lưu",
     record_version: "Ghi lại phiên bản",
-    commited_at: "Đã ghi lại lúc",
+    committed_at: "Đã ghi lại lúc",
     read_only: "Chỉ đọc",
     continue: "Tiếp tục",
     restore_version: "Khôi phục phiên bản",

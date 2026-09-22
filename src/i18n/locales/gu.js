@@ -74,7 +74,6 @@ const gu = {
     coordinate_space: "જગ્યા",
     coordinate_space_screen: "સ્ક્રીન",
     coordinate_space_diagram: "ડાયાગ્રામ",
-    table_width: "ટેબલની પહોળાઈ",
     language: "ભાષા",
     flush_storage: "સ્ટોરેજ ફ્લશ કરો",
     are_you_sure_flush_storage:
@@ -266,7 +265,7 @@ const gu = {
     versions: "આવૃત્તિઓ",
     no_saved_versions: "કોઈ સેવ કરેલી આવૃત્તિઓ નથી",
     record_version: "આવૃત્તિ રેકોર્ડ કરો",
-    commited_at: "પર કમિટ કર્યું",
+    committed_at: "પર કમિટ કર્યું",
     read_only: "ફક્ત વાંચવા માટે",
     continue: "ચાલુ રાખો",
     restore_version: "આવૃત્તિ પુનઃસ્થાપિત કરો",

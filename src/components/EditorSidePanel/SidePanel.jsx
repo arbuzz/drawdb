@@ -1,6 +1,7 @@
-import { useMemo } from "react";
-import { Tabs, TabPane, Divider, Tooltip, Button } from "@douyinfe/semi-ui";
-import { IconCode } from "@douyinfe/semi-icons";
+import { useMemo, useState } from "react";
+import { Tabs, TabPane } from "@douyinfe/semi-ui";
+import { IconCode, IconList } from "@douyinfe/semi-icons";
+import { IconTable, IconRelationship } from "../../icons";
 import { Tab } from "../../data/constants";
 import {
   useLayout,
@@ -10,6 +11,8 @@ import {
   useNotes,
   useEnums,
   useTypes,
+  useSettings,
+  useViews,
 } from "../../hooks";
 import { useTranslation } from "react-i18next";
 import RelationshipsTab from "./RelationshipsTab/RelationshipsTab";
@@ -18,6 +21,7 @@ import Issues from "./Issues";
 import AreasTab from "./AreasTab/AreasTab";
 import NotesTab from "./NotesTab/NotesTab";
 import TablesTab from "./TablesTab/TablesTab";
+import ViewsTab from "./ViewsTab/ViewsTab";
 import { databases } from "../../data/databases";
 import EnumsTab from "./EnumsTab/EnumsTab";
 import { isRtl } from "../../i18n/utils/rtl";
@@ -26,17 +30,16 @@ import DBMLEditor from "./DBMLEditor";
 
 export default function SidePanel({ width, resize, setResize }) {
   const { layout, setLayout } = useLayout();
+  const { settings } = useSettings();
   const { selectedElement, setSelectedElement } = useSelect();
   const { database, tablesCount, relationshipsCount } = useDiagram();
   const { areasCount } = useAreas();
   const { notesCount } = useNotes();
   const { typesCount } = useTypes();
   const { enumsCount } = useEnums();
+  const { viewsCount } = useViews();
   const { t } = useTranslation();
-
-  const toggleDBMLEditor = () => {
-    setLayout((prev) => ({ ...prev, dbmlEditor: !prev.dbmlEditor }));
-  };
+  const [dbmlProblems, setDbmlProblems] = useState([]);
 
   const tabList = useMemo(() => {
     const tabs = [
@@ -44,6 +47,11 @@ export default function SidePanel({ width, resize, setResize }) {
         tab: `${t("tables")} (${tablesCount})`,
         itemKey: Tab.TABLES,
         component: <TablesTab />,
+      },
+      {
+        tab: `${t("views")} (${viewsCount})`,
+        itemKey: Tab.VIEWS,
+        component: <ViewsTab />,
       },
       {
         tab: `${t("relationships")} (${relationshipsCount})`,
@@ -83,6 +91,7 @@ export default function SidePanel({ width, resize, setResize }) {
     t,
     database,
     tablesCount,
+    viewsCount,
     relationshipsCount,
     areasCount,
     typesCount,
@@ -90,15 +99,19 @@ export default function SidePanel({ width, resize, setResize }) {
     notesCount,
   ]);
 
+  const setDbmlEditor = (value) => {
+    setLayout((prev) => ({ ...prev, dbmlEditor: value }));
+  };
+
   return (
     <div className="flex h-full">
       <div
-        className="flex flex-col h-full relative border-r border-color"
+        className={`flex flex-col h-full relative ${layout.dbmlEditor ? "" : "pt-2"}`}
         style={{ width: `${width}px` }}
       >
         <div className="h-full flex-1 overflow-y-auto">
           {layout.dbmlEditor ? (
-            <DBMLEditor />
+            <DBMLEditor onProblemsChange={setDbmlProblems} />
           ) : (
             <Tabs
               type="card"
@@ -110,18 +123,6 @@ export default function SidePanel({ width, resize, setResize }) {
               }
               collapsible
               tabBarStyle={{ direction: "ltr" }}
-              tabBarExtraContent={
-                <>
-                  <Divider layout="vertical" />
-                  <Tooltip content={t("dbml_view")} position="bottom">
-                    <Button
-                      onClick={toggleDBMLEditor}
-                      icon={<IconCode />}
-                      theme="borderless"
-                    />
-                  </Tooltip>
-                </>
-              }
             >
               {tabList.length &&
                 tabList.map((tab) => (
@@ -136,19 +137,60 @@ export default function SidePanel({ width, resize, setResize }) {
             </Tabs>
           )}
         </div>
+        <div className="flex items-center justify-between px-3 py-1 border-t border-color">
+          <div className="flex items-center gap-3 text-xs text-color ms-2 opacity-60">
+            <div className="flex items-center gap-1.5" title={t("tables")}>
+              <IconTable />
+              <span>{tablesCount}</span>
+            </div>
+            <div
+              className="flex items-center gap-1.5"
+              title={t("relationships")}
+            >
+              <IconRelationship />
+              <span>{relationshipsCount}</span>
+            </div>
+          </div>
+          <div className="segmented-bg inline-flex items-center p-0.5 rounded-sm text-xs">
+            <button
+              className={`segmented-item flex items-center gap-1.5 px-2 py-0.5 rounded-sm transition-all ${
+                !layout.dbmlEditor
+                  ? "segmented-item-active font-medium shadow-sm"
+                  : "opacity-60 hover:opacity-100"
+              }`}
+              onClick={() => setDbmlEditor(false)}
+            >
+              <IconList size="small" />
+              {t("structure")}
+            </button>
+            <button
+              className={`segmented-item flex items-center gap-1 px-2 py-0.5 rounded-sm transition-all ${
+                layout.dbmlEditor
+                  ? "segmented-item-active font-medium shadow-sm"
+                  : "opacity-60 hover:opacity-100"
+              }`}
+              onClick={() => setDbmlEditor(true)}
+            >
+              <IconCode size="small" />
+              {t("code")}
+            </button>
+          </div>
+        </div>
         {layout.issues && (
           <div className="mt-auto border-t-2 border-color shadow-inner">
-            <Issues />
+            <Issues dbmlProblems={layout.dbmlEditor ? dbmlProblems : []} />
           </div>
         )}
       </div>
       <div
-        className={`flex justify-center items-center p-1 h-auto hover-2 cursor-col-resize ${
-          resize && "bg-semi-grey-2"
-        }`}
+        className={`group relative h-full w-0.5 cursor-col-resize flex justify-center ${settings.mode === "dark" ? "bg-zinc-800" : "bg-zinc-100"}`}
         onPointerDown={(e) => e.isPrimary && setResize(true)}
       >
-        <div className="w-1 border-x border-color h-1/6" />
+        <div
+          className={`h-full transition-all w-full ${
+            resize ? "bg-blue-500" : "group-hover:bg-blue-500"
+          }`}
+        />
       </div>
     </div>
   );

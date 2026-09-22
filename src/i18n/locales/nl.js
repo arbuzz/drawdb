@@ -74,7 +74,6 @@ const nl = {
     coordinate_space: "Ruimte",
     coordinate_space_screen: "Scherm",
     coordinate_space_diagram: "Diagram",
-    table_width: "Tabelbreedte",
     language: "Taal",
     flush_storage: "Opslag legen",
     are_you_sure_flush_storage:
@@ -265,7 +264,7 @@ const nl = {
     versions: "Versies",
     no_saved_versions: "Geen opgeslagen versies",
     record_version: "Versie vastleggen",
-    commited_at: "Vastgelegd op",
+    committed_at: "Vastgelegd op",
     read_only: "Alleen-lezen",
     continue: "Doorgaan",
     restore_version: "Versie herstellen",

@@ -74,7 +74,6 @@ const ka = {
     coordinate_space: "ಅಂತರ",
     coordinate_space_screen: "ಪರದೆ",
     coordinate_space_diagram: "ಚಿತ್ರ",
-    table_width: "ಕೋಷ್ಟಕದ ಅಗಲ",
     language: "ಭಾಷೆ",
     flush_storage: "ಸಂಗ್ರಹವನ್ನು ಫ್ಲಷ್ ಮಾಡಿ",
     are_you_sure_flush_storage:
@@ -273,7 +272,7 @@ const ka = {
     versions: "ಆವೃತ್ತಿಗಳು",
     no_saved_versions: "ಯಾವುದೇ ಉಳಿಸಿದ ಆವೃತ್ತಿಗಳಿಲ್ಲ",
     record_version: "ಆವೃತ್ತಿಯನ್ನು ದಾಖಲಿಸಿ",
-    commited_at: "ಸಲ್ಲಿಸಿದ ಸಮಯ",
+    committed_at: "ಸಲ್ಲಿಸಿದ ಸಮಯ",
     read_only: "ಓದಲು ಮಾತ್ರ",
     continue: "ಮುಂದುವರಿಸಿ",
     restore_version: "ಆವೃತ್ತಿಯನ್ನು ಮರುಸ್ಥಾಪಿಸಿ",

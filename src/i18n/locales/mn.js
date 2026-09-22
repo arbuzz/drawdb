@@ -74,7 +74,6 @@ const mn = {
     coordinate_space: "Координатын орон",
     coordinate_space_screen: "Дэлгэц",
     coordinate_space_diagram: "Диаграмм",
-    table_width: "Хүснэгтийн өргөн",
     language: "Хэл",
     flush_storage: "Хадгалалт цэвэрлэх",
     are_you_sure_flush_storage:
@@ -278,7 +277,7 @@ const mn = {
     versions: "Хувилбарууд",
     no_saved_versions: "Хадгалсан хувилбар алга",
     record_version: "Хувилбар бүртгэх",
-    commited_at: "Коммит хийсэн огноо",
+    committed_at: "Коммит хийсэн огноо",
     read_only: "Зөвхөн унших",
     continue: "Үргэлжлүүлэх",
     restore_version: "Хувилбар сэргээх",

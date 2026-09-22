@@ -72,7 +72,6 @@ const el = {
     coordinate_space: "Χώρος",
     coordinate_space_screen: "Οθόνη",
     coordinate_space_diagram: "Διάγραμμα",
-    table_width: "Πλάτος πίνακα",
     language: "Γλώσσα",
     flush_storage: "Εκκαθάριση αποθήκευσης",
     are_you_sure_flush_storage:
@@ -263,7 +262,7 @@ const el = {
     versions: "Εκδόσεις",
     no_saved_versions: "Δεν υπάρχουν αποθηκευμένες εκδόσεις",
     record_version: "Καταγραφή έκδοσης",
-    commited_at: "Δεσμεύτηκε στις",
+    committed_at: "Δεσμεύτηκε στις",
     read_only: "Μόνο ανάγνωση",
     continue: "Συνέχεια",
     restore_version: "Επαναφορά έκδοσης",

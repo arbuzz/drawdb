@@ -71,7 +71,6 @@ const mr = {
     coordinate_space: "स्पेस",
     coordinate_space_screen: "स्क्रीन",
     coordinate_space_diagram: "डायग्राम",
-    table_width: "टेबलची रुंदी",
     language: "भाषा",
     flush_storage: "स्टोरेज साफ करा",
     are_you_sure_flush_storage:
@@ -262,7 +261,7 @@ const mr = {
     versions: "आवृत्त्या",
     no_saved_versions: "कोणत्याही जतन केलेल्या आवृत्त्या नाहीत",
     record_version: "आवृत्ती रेकॉर्ड करा",
-    commited_at: "कमिट केले",
+    committed_at: "कमिट केले",
     read_only: "फक्त वाचनीय",
     continue: "सुरू ठेवा",
     restore_version: "आवृत्ती पुनर्संचयित करा",
